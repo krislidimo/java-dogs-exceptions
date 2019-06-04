@@ -1,5 +1,6 @@
 package com.lambdaschool.dogsinitial.controller;
 
+import com.lambdaschool.dogsinitial.exception.ResourceNotFoundException;
 import com.lambdaschool.dogsinitial.model.Dog;
 import com.lambdaschool.dogsinitial.DogsinitialApplication;
 import org.springframework.http.HttpStatus;
@@ -17,25 +18,33 @@ public class DogController
 {
     // localhost:2019/dogs/dogs
     @GetMapping(value = "/dogs", produces={"application/json"})
-    public ResponseEntity<?> getAllDogs()
-    {
+    public ResponseEntity<?> getAllDogs() {
         return new ResponseEntity<>(DogsinitialApplication.ourDogList.dogList, HttpStatus.OK);
     }
 
     // localhost:2019/dogs/{id}
     @GetMapping(value = "/{id}", produces={"application/json"})
-    public ResponseEntity<?> getDogDetail(@PathVariable long id)
-    {
-        Dog rtnDog = DogsinitialApplication.ourDogList.findDog(d -> (d.getId() == id));
+    public ResponseEntity<?> getDogDetail(@PathVariable long id) {
+        Dog rtnDog;
+
+        if ((DogsinitialApplication.ourDogList.findDog(d -> d.getId() == id)) == null) {
+            throw new ResourceNotFoundException("Dog with id " + id + " not found");
+        } else {
+            rtnDog = DogsinitialApplication.ourDogList.findDog(d -> (d.getId() == id));
+        }
         return new ResponseEntity<>(rtnDog, HttpStatus.OK);
     }
 
     // localhost:2019/dogs/breeds/{breed}
     @GetMapping(value = "/breeds/{breed}", produces={"application/json"})
-    public ResponseEntity<?> getDogBreeds (@PathVariable String breed)
-    {
+    public ResponseEntity<?> getDogBreeds (@PathVariable String breed) {
         ArrayList<Dog> rtnDogs = DogsinitialApplication.ourDogList.
                 findDogs(d -> d.getBreed().toUpperCase().equals(breed.toUpperCase()));
+
+        if (rtnDogs.size() == 0) {
+            throw new ResourceNotFoundException("No dogs with bread: " + breed + " found.");
+        }
+
         return new ResponseEntity<>(rtnDogs, HttpStatus.OK);
     }
 }
